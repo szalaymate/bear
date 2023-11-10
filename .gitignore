@@ -1,0 +1,7 @@
+# IDEA project and output dir
+.idea
+out
+
+# Gradle project and output dir
+.gradle
+build
