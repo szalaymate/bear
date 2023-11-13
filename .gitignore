@@ -1,3 +1,6 @@
+# Ugly MAC Finder specific files
+.DS_Store
+
 # IDEA project and output dir
 .idea
 out
