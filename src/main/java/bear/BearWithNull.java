@@ -13,15 +13,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static bear.Common.createBear;
+
 @RestController
-public class BearWithNullCheck {
+public class BearWithNull {
 
 	private static final Path WORKING = Paths.get("");
 	@Value("${directory:}")
 	private final Path directory = WORKING;
 
 	@GetMapping(
-			value = "/bear-with-null-checks/{head}/{body}/{leg}",
+			value = "/bear-with-null/{head}/{body}/{leg}",
 			produces = MediaType.IMAGE_JPEG_VALUE
 	)
 	public byte[] bear(@PathVariable String head, @PathVariable String body, @PathVariable String leg) {
@@ -40,36 +42,28 @@ public class BearWithNullCheck {
 		return Common.writeToByteArray(createBear(loadedHead, loadedBody, loadedLeg));
 	}
 
-	private BufferedImage createBear(BufferedImage head, BufferedImage body, BufferedImage leg) {
-		int height = head.getHeight() + body.getHeight() + leg.getHeight();
-		int width = head.getWidth();
-
-		var bear = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-		bear.createGraphics().drawImage(head, 0, 0, null);
-		bear.createGraphics().drawImage(body, 0, head.getHeight(), null);
-		bear.createGraphics().drawImage(leg, 0, head.getHeight() + body.getHeight(), null);
-
-		return bear;
-	}
-
 	private BufferedImage readMember(String memberType, String name) {
 		var fileName = name + ".jpg";
-		var member = loadImageFromFile(directory.resolve(memberType).resolve(fileName));
+		var member = loadImageFromWorkingDir(memberType, fileName);
 		if (member == null) {
-			member = loadImageFromFile(WORKING.resolve(memberType).resolve(fileName));
+			member = loadImageFromSpecifiedDir(memberType, fileName);
 		}
 		if (member == null) {
-			member = loadImageFromResource("/members/" + memberType + "/" + fileName);
+			member = loadImageFromResource(memberType, fileName);
 		}
 		return member;
 	}
 
-	private static BufferedImage loadImageFromFile(Path file) {
-		return loadImage(() -> Files.newInputStream(file));
+	private BufferedImage loadImageFromSpecifiedDir(String subDir, String fileName) {
+		return loadImage(() -> Files.newInputStream(directory.resolve(subDir).resolve(fileName)));
 	}
 
-	private static BufferedImage loadImageFromResource(String resource) {
-		return loadImage(() -> Common.loadResource(resource));
+	private BufferedImage loadImageFromWorkingDir(String subDir, String fileName) {
+		return loadImage(() -> Files.newInputStream(WORKING.resolve(subDir).resolve(fileName)));
+	}
+
+	private static BufferedImage loadImageFromResource(String subDir, String fileName) {
+		return loadImage(() -> Common.loadResource("/members/" + subDir + "/" + fileName));
 	}
 
 	/**

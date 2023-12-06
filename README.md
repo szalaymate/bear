@@ -21,23 +21,35 @@ This configures `specified-directory`, and uses `working-directory` as JVM worki
 
 ### Using special value `null` for error handling
 
-Class: `BearWithNullCheck`
-Endpoint: `/bear-with-null-checks/{head}/{body}/{leg}`
+Class: `BearWithNull`
+Endpoint: `/bear-with-null/{head}/{body}/{leg}`
 
 Errors are signaled as `null` value, and handled as `null` check in this solution.
 `null` value is handled also well by SpringBoot as a return value of the controller method.
 
 The flow of data is illustrated in the following image.
 
-// TODO: image here
+![Null check flow](NullCheckFlow.jpg)
+
+The possibility of `null` values doesn't appear in the signature of methods.
 
 ### Using exceptions
 
-Class: `BearWithExceptions`
-Endpoint: `/bear-with-exceptions/{head}/{body}/{leg}`
+Class: `BearWithIOException`
+Endpoint: `/bear-with-io-exception/{head}/{body}/{leg}`
 
 Exceptions are propagated as they are - as `IOException`s.
 All of them are handled by SpringBoot,
 except that the image loading business logic in `readMember` uses them to load image from where it is possible.
 
-// TODO: image here
+![IOException flow](IOExceptionFlow.jpg)
+
+Class: `BearWithException`
+Endpoint: `/bear-with-exception/{head}/{body}/{leg}`
+
+A custom exception, `NoSuchBearException` is propagated.
+Handled specially by SpringBoot,
+except that the image loading business logic in `readMember` uses them to load image from where it is possible.
+
+The diagram is almost the same as the `IOException` case.
+Since this custom exception is a `RuntimeException`, it does not appear in the signature of methods.

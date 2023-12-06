@@ -43,4 +43,16 @@ class Common {
             throw new UncheckedIOException(e);
         }
     }
+
+    static BufferedImage createBear(BufferedImage head, BufferedImage body, BufferedImage leg) {
+        int height = head.getHeight() + body.getHeight() + leg.getHeight();
+        int width = head.getWidth();
+
+        var bear = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        bear.createGraphics().drawImage(head, 0, 0, null);
+        bear.createGraphics().drawImage(body, 0, head.getHeight(), null);
+        bear.createGraphics().drawImage(leg, 0, head.getHeight() + body.getHeight(), null);
+
+        return bear;
+    }
 }
