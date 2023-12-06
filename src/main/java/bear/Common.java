@@ -55,4 +55,12 @@ class Common {
 
         return bear;
     }
+
+    static String joinS(String... strings) {
+        return String.join(" ", strings);
+    }
+
+    static String joinN(String... strings) {
+        return String.join(System.lineSeparator(), strings);
+    }
 }

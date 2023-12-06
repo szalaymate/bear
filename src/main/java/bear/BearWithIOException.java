@@ -46,12 +46,12 @@ public class BearWithIOException {
         }
     }
 
-    private BufferedImage loadImageFromSpecifiedDir(String subDir, String fileName) throws IOException {
-        return loadImage(() -> Files.newInputStream(directory.resolve(subDir).resolve(fileName)));
-    }
-
     private BufferedImage loadImageFromWorkingDir(String subDir, String fileName) throws IOException {
         return loadImage(() -> Files.newInputStream(WORKING.resolve(subDir).resolve(fileName)));
+    }
+
+    private BufferedImage loadImageFromSpecifiedDir(String subDir, String fileName) throws IOException {
+        return loadImage(() -> Files.newInputStream(directory.resolve(subDir).resolve(fileName)));
     }
 
     private static BufferedImage loadImageFromResource(String subDir, String fileName) throws IOException {
