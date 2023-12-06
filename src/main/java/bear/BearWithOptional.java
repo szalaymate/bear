@@ -1,7 +1,6 @@
 package bear;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -12,8 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -65,14 +65,15 @@ public class BearWithOptional {
 	}
 
 	/**
-	 * This is the basic low level image loader method.
-	 * Now we propagate errors from here as an {@link Optional} containing the result, or empty if not found.
+	 * Propagating not found error from here as an empty {@link Optional}.
 	 */
 	private static Optional<BufferedImage> loadImage(InputStreamSupplier inSupplier) {
 		try (var in = inSupplier.get()) {
 			return Optional.of(ImageIO.read(in));
-		} catch (IOException e) {
+		} catch (NoSuchFileException e) {
 			return Optional.empty();
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
 		}
 	}
 }

@@ -31,6 +31,20 @@ class Common {
     }
 
     /**
+     * This loads an image from the supplied stream.
+     * Only {@link NoSuchFileException} is propagated as checked, because only that case of error is interesting from the example's point of view.
+     */
+    static BufferedImage loadImage(InputStreamSupplier inSupplier) throws NoSuchFileException {
+        try (var in = inSupplier.get()) {
+            return ImageIO.read(in);
+        } catch (NoSuchFileException e) {
+            throw e;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
      * We do not expect any errors from here,
      * that's why the {@link IOException} is caught here and propagated as {@link UncheckedIOException}.
      */

@@ -6,10 +6,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -67,13 +66,12 @@ public class BearWithNull {
 	}
 
 	/**
-	 * This is the basic low level image loader method.
-	 * Now we propagate errors from here as a special value, null.
+	 * Propagating not found error from here as a special value, null.
 	 */
 	private static BufferedImage loadImage(InputStreamSupplier inSupplier) {
-		try (var in = inSupplier.get()) {
-			return ImageIO.read(in);
-		} catch (IOException e) {
+		try {
+			return Common.loadImage(inSupplier);
+		} catch (NoSuchFileException e) {
 			return null;
 		}
 	}

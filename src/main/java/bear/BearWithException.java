@@ -8,16 +8,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static bear.Common.createBear;
+import static bear.Common.joinS;
 
 @RestController
 public class BearWithException {
@@ -63,17 +61,13 @@ public class BearWithException {
     }
 
     /**
-     * This is the basic low level image loader method.
-     * Now we propagate errors from here throwing {@link NoSuchBearException}
-     * Exceptions other than {@link NoSuchFileException} are propagated for now.
+     * Propagating not found error from here throwing {@link NoSuchBearException}.
      */
     private static BufferedImage loadImage(InputStreamSupplier inSupplier) {
-        try (var in = inSupplier.get()) {
-            return ImageIO.read(in);
+        try {
+            return Common.loadImage(inSupplier);
         } catch (NoSuchFileException e) {
-            throw new NoSuchBearException("Bear not found: " + e.getMessage());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            throw new NoSuchBearException(joinS("Bear not found:", e.getMessage()));
         }
     }
 

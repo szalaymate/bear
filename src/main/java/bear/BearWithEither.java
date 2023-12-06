@@ -8,13 +8,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 import java.util.function.Function;
 
 import static bear.BearWithEither.Either.left;
@@ -77,13 +75,12 @@ public class BearWithEither {
 	}
 
 	/**
-	 * This is the basic low level image loader method.
-	 * Now we propagate errors from here as an {@link Optional} containing the result, or empty if not found.
+	 * Propagating not found error from here as an {@link Either} containing a message on error.
 	 */
 	private static Either<BufferedImage, String> loadImage(InputStreamSupplier inSupplier) {
-		try (var in = inSupplier.get()) {
-			return left(ImageIO.read(in));
-		} catch (IOException e) {
+		try {
+			return left(Common.loadImage(inSupplier));
+		} catch (NoSuchFileException e) {
 			return right(joinS("Image not found: ", e.getMessage()));
 		}
 	}
