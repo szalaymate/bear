@@ -8,17 +8,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
-import static bear.Common.createBear;
+import static bear.Common.concatenateImages;
+import static bear.Common.loadResource;
 
 @RestController
 public class BearWithOptional {
@@ -35,7 +33,7 @@ public class BearWithOptional {
 		return readMember("heads", head)
 				.flatMap(loadedHead -> readMember("bodies", body)
 						.flatMap(loadedBodies -> readMember("legs", leg)
-								.map(loadedLegs -> createBear(loadedHead, loadedBodies, loadedLegs))))
+								.map(loadedLegs -> concatenateImages(loadedHead, loadedBodies, loadedLegs))))
 				.map(Common::writeToByteArray)
 				.map(bear -> ResponseEntity.ok()
 						.contentType(MediaType.IMAGE_JPEG)
@@ -61,19 +59,17 @@ public class BearWithOptional {
 	}
 
 	private static Optional<BufferedImage> loadImageFromResource(String subDir, String fileName) {
-		return loadImage(() -> Common.loadResource("/members/" + subDir + "/" + fileName));
+		return loadImage(() -> loadResource("/members/" + subDir + "/" + fileName));
 	}
 
 	/**
 	 * Propagating not found error from here as an empty {@link Optional}.
 	 */
 	private static Optional<BufferedImage> loadImage(InputStreamSupplier inSupplier) {
-		try (var in = inSupplier.get()) {
-			return Optional.of(ImageIO.read(in));
+		try {
+			return Optional.of(Common.loadImage(inSupplier));
 		} catch (NoSuchFileException e) {
 			return Optional.empty();
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
 		}
 	}
 }
