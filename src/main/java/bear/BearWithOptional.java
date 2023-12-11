@@ -18,7 +18,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
-import static bear.Common.createBear;
+import static bear.Common.concatenateImages;
+import static bear.Common.loadResource;
 
 @RestController
 public class BearWithOptional {
@@ -35,7 +36,7 @@ public class BearWithOptional {
 		return readMember("heads", head)
 				.flatMap(loadedHead -> readMember("bodies", body)
 						.flatMap(loadedBodies -> readMember("legs", leg)
-								.map(loadedLegs -> createBear(loadedHead, loadedBodies, loadedLegs))))
+								.map(loadedLegs -> concatenateImages(loadedHead, loadedBodies, loadedLegs))))
 				.map(Common::writeToByteArray)
 				.map(bear -> ResponseEntity.ok()
 						.contentType(MediaType.IMAGE_JPEG)
@@ -61,7 +62,7 @@ public class BearWithOptional {
 	}
 
 	private static Optional<BufferedImage> loadImageFromResource(String subDir, String fileName) {
-		return loadImage(() -> Common.loadResource("/members/" + subDir + "/" + fileName));
+		return loadImage(() -> loadResource("/members/" + subDir + "/" + fileName));
 	}
 
 	/**

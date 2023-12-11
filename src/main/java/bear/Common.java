@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 
 class Common {
 
@@ -58,16 +60,32 @@ class Common {
         }
     }
 
-    static BufferedImage createBear(BufferedImage head, BufferedImage body, BufferedImage leg) {
-        int height = head.getHeight() + body.getHeight() + leg.getHeight();
-        int width = head.getWidth();
+    static BufferedImage concatenateImages(BufferedImage... images) {
+        return concatenateImages(Arrays.asList(images));
+    }
 
-        var bear = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        bear.createGraphics().drawImage(head, 0, 0, null);
-        bear.createGraphics().drawImage(body, 0, head.getHeight(), null);
-        bear.createGraphics().drawImage(leg, 0, head.getHeight() + body.getHeight(), null);
+    /**
+     * Concatenates images, each below the other.
+     */
+    static BufferedImage concatenateImages(List<BufferedImage> images) {
+        return images.stream().reduce(
+                new ImageConcat(
+                        images.stream().mapToInt(BufferedImage::getWidth).max().orElse(0),
+                        images.stream().mapToInt(BufferedImage::getHeight).sum()),
+                (c, i) -> {
+                    c.image().createGraphics().drawImage(i, 0, c.endOfLastImage(), null);
+                    return new ImageConcat(c.image(), c.endOfLastImage() + i.getHeight());
+                },
+                (c1, c2) -> {
+                    c1.image().createGraphics().drawImage(c2.image(), 0, c1.endOfLastImage(), null);
+                    return new ImageConcat(c1.image(), c1.endOfLastImage() + c2.image().getHeight());
+                }).image();
+    }
 
-        return bear;
+    private record ImageConcat(BufferedImage image, int endOfLastImage) {
+        public ImageConcat(int width, int height) {
+            this(new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB), 0);
+        }
     }
 
     static String joinS(String... strings) {

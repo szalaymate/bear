@@ -17,42 +17,29 @@ import static bear.Common.loadResource;
 import static bear.Common.writeToByteArray;
 
 @RestController
-public class BearWithNull {
+public class BearWithNullObject {
 
 	private static final Path WORKING = Paths.get("");
 	@Value("${directory:}")
 	private final Path directory = WORKING;
 
 	@GetMapping(
-			value = "/bear-with-null/{head}/{body}/{leg}",
+			value = "/bear-with-null-object/{head}/{body}/{leg}",
 			produces = MediaType.IMAGE_JPEG_VALUE
 	)
 	public byte[] bear(@PathVariable String head, @PathVariable String body, @PathVariable String leg) {
-		var loadedHead = readMember("heads", head);
-		if (loadedHead == null) {
-			return null;
-		}
-		var loadedBody = readMember("bodies", body);
-		if (loadedBody == null) {
-			return null;
-		}
-		var loadedLeg = readMember("legs", leg);
-		if (loadedLeg == null) {
-			return null;
-		}
-		return writeToByteArray(concatenateImages(loadedHead, loadedBody, loadedLeg));
+		return writeToByteArray(concatenateImages(
+				readMember("heads", head),
+				readMember("bodies", body),
+				readMember("legs", leg)));
 	}
 
 	private BufferedImage readMember(String memberType, String name) {
 		var fileName = name + ".jpg";
-		var member = loadImageFromWorkingDir(memberType, fileName);
-		if (member == null) {
-			member = loadImageFromSpecifiedDir(memberType, fileName);
-		}
-		if (member == null) {
-			member = loadImageFromResource(memberType, fileName);
-		}
-		return member;
+		return concatenateImages(
+				loadImageFromWorkingDir(memberType, fileName),
+				loadImageFromSpecifiedDir(memberType, fileName),
+				loadImageFromResource(memberType, fileName));
 	}
 
 	private BufferedImage loadImageFromWorkingDir(String subDir, String fileName) {
@@ -68,13 +55,14 @@ public class BearWithNull {
 	}
 
 	/**
-	 * Propagating not found error from here as a special value, null.
+	 * Propagating not found error from here as a null object.
+	 * This is a hack here, since {@link BufferedImage} doesn't support a zero image.
 	 */
 	private static BufferedImage loadImage(InputStreamSupplier inSupplier) {
 		try {
 			return Common.loadImage(inSupplier);
 		} catch (NoSuchFileException e) {
-			return null;
+			return new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
 		}
 	}
 }

@@ -23,7 +23,9 @@ The flow of data / error is illustrated in the following image:
 ```
 This configures `specified-directory`, and uses `working-directory` as JVM working dir.
 
-### Using special value `null` for error handling
+## Error handling solutions
+
+### Using special value, `null`
 
 Class: `BearWithNull`
 Endpoint: `/bear-with-null/{head}/{body}/{leg}`
@@ -33,24 +35,12 @@ Errors are signaled as `null` value, and handled as `null` check in this solutio
 
 The possibility of `null` values doesn't appear in the signature of methods.
 
-### Using exceptions
+### Using null object
 
-Class: `BearWithIOException`
-Endpoint: `/bear-with-io-exception/{head}/{body}/{leg}`
+Class: `BearWithNullObject`
+Endpoint: `/bear-with-null-object/{head}/{body}/{leg}`
 
-Exceptions are propagated as they are - as `IOException`s.
-All of them are handled by SpringBoot,
-except that the image loading business logic in `readMember` uses them to load image from where it is possible.
-
-Class: `BearWithException`
-Endpoint: `/bear-with-exception/{head}/{body}/{leg}`
-
-A custom exception, `NoSuchBearException` is propagated.
-Handled specially by SpringBoot,
-except that the image loading business logic in `readMember` uses them to load image from where it is possible.
-
-The diagram is almost the same as the `IOException` case.
-Since this custom exception is a `RuntimeException`, it does not appear in the signature of methods.
+If a member of the bear not found, then a "good" default value is returned, which can be handled just the same as any other bear member.
 
 ### Using `Optional`
 
@@ -68,3 +58,31 @@ Endpoint: `/bear-with-either/{head}/{body}/{leg}`
 
 Errors are signaled as `Either` with some message included as an alternative.
 A `ResponseEntity` is created as a result, based on the value of `Either`.
+
+At each step in the flow, error is propagated with some additional message.
+This is not possible using null object, `null` or `Optional`, since they're not able to hold that information.
+
+
+
+### Using exception
+
+Class: `BearWithException`
+Endpoint: `/bear-with-exception/{head}/{body}/{leg}`
+
+Exceptions are propagated as they are - as `NoSuchFileException`s.
+All of them are handled by SpringBoot,
+except that the image loading business logic in `readMember` uses them to load image from where it is possible.
+
+### Using 
+
+Class: `BearWithCustomException`
+Endpoint: `/bear-with-custom-exception/{head}/{body}/{leg}`
+
+A custom exception, `NoSuchBearException` is propagated.
+Handled specially by SpringBoot,
+except that the image loading business logic in `readMember` uses them to load image from where it is possible.
+
+At each step in the flow, error is propagated with some additional message.
+This is also possible using `NoSuchFileException`.
+
+Since this custom exception is a `RuntimeException`, it does not appear in the signature of methods.
