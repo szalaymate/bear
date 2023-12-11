@@ -1,0 +1,10 @@
+# Ugly MAC Finder specific files
+.DS_Store
+
+# IDEA project and output dir
+.idea
+out
+
+# Gradle project and output dir
+.gradle
+build
