@@ -13,9 +13,10 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import static bear.BearWithEither.Either.left;
 import static bear.BearWithEither.Either.right;
@@ -37,7 +38,7 @@ public class BearWithEither {
 			produces = {MediaType.IMAGE_JPEG_VALUE, MediaType.TEXT_PLAIN_VALUE}
 	)
 	public ResponseEntity<Object> bear(@PathVariable String head, @PathVariable String body, @PathVariable String leg) {
-		return bearConcat(head, body, leg)
+		return bearCompose(head, body, leg)
 				.mapLeft(Common::writeToByteArray)
 				.either(bear -> ResponseEntity.ok()
 								.contentType(MediaType.IMAGE_JPEG)
@@ -131,44 +132,36 @@ public class BearWithEither {
 		}
 	}
 
-	// An alternative solution using some sane concatenation of Either.
-	// Lazy computation applied to read next member only on success of the previous.
+	// An alternative solution that uses composition instead of flatMap
 
-	private Either<BufferedImage, String> bearConcat(String head, String body, String leg) {
-		return Stream.<Supplier<Either<BufferedImage, String>>>of(
-						() -> readMemberFirst("heads", head).mapRight(r -> joinN("There's no head found:", r)),
-						() -> readMemberFirst("bodies", body).mapRight(r -> joinN("There's no body found:", r)),
-						() -> readMemberFirst("legs", leg).mapRight(r -> joinN("There's no leg found:", r)))
-				.map(m -> (Supplier<Either<Stream<BufferedImage>, String>>) () -> m.get().mapLeft(Stream::of))
-				.reduce(BearWithEither::concatMembers).orElseThrow()
-				.get()
-				.mapLeft(Stream::toList)
-				.mapLeft(Common::concatenateImages);
-	}
-
-	private static <T> Supplier<Either<Stream<T>, String>> concatMembers(Supplier<Either<Stream<T>, String>> e1, Supplier<Either<Stream<T>, String>> e2) {
-		return () -> e1.get().either(
-				l1 -> e2.get().either(
-						l2 -> left(Stream.concat(l1, l2)),
-						Either::right),
-				Either::right);
-	}
-
-	private Either<BufferedImage, String> readMemberFirst(String memberType, String name) {
-		var fileName = name + ".jpg";
-		return Stream.<Supplier<Either<BufferedImage, String>>>of(
-						() -> loadImageFromWorkingDir(memberType, fileName),
-						() -> loadImageFromSpecifiedDir(memberType, fileName),
-						() -> loadImageFromResource(memberType, fileName))
-				.reduce(BearWithEither::first).orElseThrow()
+	private Either<BufferedImage, String> bearCompose(String head, String body, String leg) {
+		return ((EitherSupplier<BufferedImage, String>) () -> readMemberCompose("heads", head)
+				.mapRight(r -> joinN("There's no head found:", r)))
+				.composeLeft(loadedHead -> readMemberCompose("bodies", body).biMap(
+						l -> concatenateImages(loadedHead, l),
+						r -> joinN("There's no body found:", r)))
+				.composeLeft(loadedHeadAndBody -> readMemberCompose("legs", leg).biMap(
+						l -> concatenateImages(loadedHeadAndBody, l),
+					   	r -> joinN("There's no leg found:", r)))
 				.get();
 	}
 
-	private static <T> Supplier<Either<T, String>> first(Supplier<Either<T, String>> e1, Supplier<Either<T, String>> e2) {
-		return () -> e1.get().either(
-				Either::left,
-				r1 -> e2.get().either(
-						Either::left,
-						r2 -> right(joinN(r1, r2))));
+	private Either<BufferedImage, String> readMemberCompose(String memberType, String name) {
+		var fileName = name + ".jpg";
+		return ((EitherSupplier<BufferedImage, String>) () -> loadImageFromWorkingDir(memberType, fileName))
+				.composeRight(notInWorking -> loadImageFromSpecifiedDir(memberType, fileName).mapRight(r -> joinN(notInWorking, r)))
+				.composeRight(notInSpecified -> loadImageFromResource(memberType, fileName).mapRight(r -> joinN(notInSpecified, r)))
+				.get();
+	}
+
+	interface EitherSupplier<L, R> extends Supplier<Either<L, R>> {
+
+		default <L1> EitherSupplier<L1, R> composeLeft(Function<L, Either<L1, R>> other) {
+			return () -> get().flatMapLeft(other);
+		}
+
+		default <R1> EitherSupplier<L, R1> composeRight(Function<R, Either<L, R1>> other) {
+			return () -> get().flatMapRight(other);
+		}
 	}
 }

@@ -92,6 +92,10 @@ class Common {
         return String.join(" ", strings);
     }
 
+    static String joinN(List<String> strings) {
+        return String.join(System.lineSeparator(), strings);
+    }
+
     static String joinN(String... strings) {
         return String.join(System.lineSeparator(), strings);
     }
